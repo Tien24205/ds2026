@@ -1,0 +1,160 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\title{Practical Work 2: RPC File Transfer}
+\author{USTH -- Distributed Systems \\ Group Members: <your names>}
+\date{\today}
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    frame=single,
+    breaklines=true
+}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+In Practical Work 1, we developed a TCP-based file transfer system using sockets.  
+In Practical Work 2, we upgrade the system to use RPC (Remote Procedure Calls).  
+RPC allows the client to call a remote function on the server without handling low-level sockets.
+
+We implemented the system using \textbf{XML-RPC}, a simple built-in RPC library in Python.  
+It requires no additional installation and is easy to understand.
+
+\section{RPC Service Design}
+
+The RPC service exposes one remote method:
+
+\begin{center}
+\texttt{get\_file(filename) → returns file chunks}
+\end{center}
+
+The logic is simple:
+
+\begin{itemize}
+    \item Client calls the RPC method requesting a filename.
+    \item Server checks if the file exists.
+    \item If the file does not exist, the server returns an error.
+    \item If the file exists, the server reads it in 4096-byte chunks.
+    \item Each chunk is Base64 encoded (XML-RPC does not support raw binary).
+    \item The client decodes the chunks and reconstructs the file.
+\end{itemize}
+
+\subsection*{RPC Sequence Diagram}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{rpc_sequence.png}
+    \caption{RPC File Transfer Sequence Diagram}
+\end{figure}
+
+\section{System Organization}
+
+The system is organized into two main components:
+
+\begin{itemize}
+    \item \textbf{RPC Server:} Hosts the \texttt{get\_file()} function and returns file data.
+    \item \textbf{RPC Client:} Calls the RPC function and writes the received file to disk.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{rpc_architecture.png}
+    \caption{System Architecture Using RPC}
+\end{figure}
+
+Compared to TCP sockets, RPC simplifies:
+
+\begin{itemize}
+    \item Connection handling
+    \item Message formatting
+    \item Error management
+    \item File chunk transmission
+\end{itemize}
+
+\section{Implementation}
+
+\subsection{RPC Server Code (Python)}
+\begin{lstlisting}[language=Python]
+from xmlrpc.server import SimpleXMLRPCServer
+import base64
+import os
+
+CHUNK = 4096
+
+def get_file(filename):
+    if not os.path.exists(filename):
+        return {"error": "File not found"}
+
+    result = []
+    with open(filename, "rb") as f:
+        while True:
+            data = f.read(CHUNK)
+            if not data:
+                break
+            result.append(base64.b64encode(data).decode("utf-8"))
+    return {"chunks": result}
+
+server = SimpleXMLRPCServer(("0.0.0.0", 5000))
+print("RPC Server running on port 5000...")
+server.register_function(get_file, "get_file")
+server.serve_forever()
+\end{lstlisting}
+
+\subsection{RPC Client Code (Python)}
+\begin{lstlisting}[language=Python]
+import xmlrpc.client
+import base64
+
+proxy = xmlrpc.client.ServerProxy("http://127.0.0.1:5000/")
+
+filename = input("Enter filename to download: ")
+
+response = proxy.get_file(filename)
+
+if "error" in response:
+    print("Server:", response["error"])
+else:
+    with open("received_" + filename, "wb") as f:
+        for chunk in response["chunks"]:
+            f.write(base64.b64decode(chunk))
+    print("File downloaded successfully!")
+\end{lstlisting}
+
+\section{Connection to TCP Version}
+Below is a simplified excerpt of the original TCP code used in Practical Work 1.
+
+\subsection*{Original TCP Server (excerpt)}
+\begin{lstlisting}[language=C]
+while ((bytes = fread(buffer, 1, BUFFER_SIZE, file)) > 0) {
+    send(client_socket, buffer, bytes, 0);
+}
+\end{lstlisting}
+
+\subsection*{Original TCP Client (excerpt)}
+\begin{lstlisting}[language=C]
+while (total_received < file_size) {
+    bytes = recv(server, buffer, BUFFER_SIZE, 0);
+    fwrite(buffer, 1, bytes, file);
+}
+\end{lstlisting}
+
+These manual socket operations are replaced by an RPC function call.
+
+\section{Work Distribution}
+\begin{itemize}
+    \item \textbf{Student A:} Implemented RPC server.
+    \item \textbf{Student B:} Implemented RPC client.
+    \item \textbf{Student C:} Created diagrams and protocol design.
+    \item \textbf{Student D:} Wrote the LaTeX report.
+\end{itemize}
+
+\section{Conclusion}
+The RPC version of our file transfer system is significantly simpler than the TCP version.  
+RPC hides socket management and lets us focus on the functionality: transferring a file.  
+Using XML-RPC made the implementation lightweight and easy to understand.
+
+\end{document}
