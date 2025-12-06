@@ -11,4 +11,5 @@ Student Info
 
 * Student Name: Do Minh Tien
 * Student ID: 23BI14421
-* Student Group ID: Not-for-now
+* Student Group ID: 12
+* Topic ID: 9
