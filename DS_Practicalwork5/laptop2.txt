@@ -1,0 +1,3 @@
+/home/user/documents/longpath.txt
+/tmp/short
+/etc/config/file

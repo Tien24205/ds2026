@@ -1,0 +1,89 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\title{Practical Work 5: Longest Path using MapReduce}
+\author{USTH -- Distributed Systems \\ Do Minh Tien}
+\date{\today}
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    frame=single,
+    breaklines=true
+}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+The goal of this practical work is to process a distributed set of files,
+each containing multiple absolute file paths, and determine the longest
+path(s) using a MapReduce framework. Python is used to simulate the
+MapReduce pipeline.
+
+\section{Mapper and Reducer Design}
+
+The Mapper receives full file paths, one per line, and emits a single key
+``longest'' with a value containing the path and its length.
+
+The Shuffle phase groups all values under the same key.
+
+The Reducer scans all received values, tracks the maximum path length, and
+outputs all paths matching the longest length.
+
+\begin{figure}[H]
+    \centering
+   
+\begin{figure}
+        \centering
+        \includegraphics[width=0.5\linewidth]{labwork5.png}
+        \caption{Enter Caption}
+        \label{fig:placeholder}
+    \end{figure}
+        \caption{Longest Path MapReduce Workflow}
+\end{figure}
+
+\section{Code Snippets}
+
+\subsection*{Mapper}
+\begin{lstlisting}[language=Python]
+import sys
+
+for line in sys.stdin:
+    path = line.strip()
+    if path:
+        print(f"longest\t{path}\t{len(path)}")
+\end{lstlisting}
+
+\subsection*{Reducer}
+\begin{lstlisting}[language=Python]
+import sys
+
+max_length = -1
+longest_paths = []
+
+for line in sys.stdin:
+    _, path, length = line.strip().split("\t")
+    length = int(length)
+
+    if length > max_length:
+        max_length = length
+        longest_paths = [path]
+    elif length == max_length:
+        longest_paths.append(path)
+
+for p in longest_paths:
+    print(p)
+\end{lstlisting}
+
+\section{Who Does What}
+\begin{itemize}
+  \item \textbf{Mapper}: Reads each path, computes its length, and outputs (path, length).
+  \item \textbf{Shuffle/Sort}: Groups all values under the single key ``longest''.
+  \item \textbf{Reducer}: Determines the maximum length and outputs all longest paths.
+  \item \textbf{Pipeline}: Combines Mapper, sorting, and Reducer into a complete workflow.
+\end{itemize}
+
+\end{document}

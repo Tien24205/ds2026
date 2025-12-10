@@ -1,0 +1,303 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\title{Practical Work 4: Word Count using MapReduce}
+\author{USTH -- Distributed Systems \\ Do Minh Tien - 23BI14421}
+\date{\today}
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    frame=single,
+    breaklines=true
+}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+This practical work implements the classical Word Count program using a
+custom MapReduce model in Python.  
+The goal is to understand how Mapper, Shuffle, and Reducer components
+cooperate in distributed data processing, without relying on heavy
+frameworks such as Hadoop or Spark.
+
+The assignment requires using a MapReduce system of our choice,
+and since Python is allowed while C/C++ frameworks are unavailable,
+we developed our own lightweight MapReduce pipeline.
+
+\section{Why We Chose Our MapReduce Implementation}
+We implemented a minimal MapReduce system in Python because:
+
+\begin{itemize}
+    \item Python is simple, portable, and installed on all USTH lab machines.
+    \item It avoids the heavy installation and configuration of Hadoop.
+    \item It clearly demonstrates the internal logic of Map, Shuffle, and Reduce.
+    \item The pipeline can be executed using Unix tools (cat, sort).
+    \item It satisfies the requirement of “inventing” our own MapReduce version.
+\end{itemize}
+
+This makes the implementation educational, lightweight, and easy to test.
+
+\section{MapReduce Architecture for Word Count}
+
+The system follows the classical 3-phase MapReduce pipeline:
+
+\begin{enumerate}
+    \item \textbf{Map Phase}:  
+    Tokenizes input text and outputs \texttt{(word, 1)} pairs.
+
+    \item \textbf{Shuffle/Sort Phase}:  
+    Groups pairs by word and sorts them.
+
+    \item \textbf{Reduce Phase}:  
+    Sums all counts for each word and emits final totals.
+\end{enumerate}
+
+\begin{figure}[H]
+    \centering
+\begin{figure}
+        \centering
+        \includegraphics[width=0.5\linewidth]{figure.png}
+        \caption{Enter Caption}
+        \label{fig:placeholder}
+    \end{figure}
+        \caption{Word Count MapReduce Workflow}
+\end{figure}
+
+\section{Mapper Implementation}
+
+The Mapper reads input from standard input, splits into words,
+and emits a key-value pair for each occurrence:
+
+\begin{lstlisting}[language=Python]
+# mapper.py
+import sys
+
+for line in sys.stdin:
+    line = line.strip().lower()
+    for word in line.split():
+        print(f"{word}\t1")
+\end{lstlisting}
+
+\section{Reducer Implementation}
+
+The Reducer receives sorted pairs and aggregates word counts:
+
+\begin{lstlisting}[language=Python]
+# reducer.py
+import sys
+
+current_word = None
+current_count = 0
+
+for line in sys.stdin:
+    word, count = line.strip().split("\t")
+    count = int(count)
+
+    if word == current_word:
+        current_count += count
+    else:
+        if current_word is not None:
+            print(f"{current_word}\t{current_count}")
+        current_word = word
+        current_count = count
+
+if current_word is not None:
+    print(f"{current_word}\t{current_count}")
+\end{lstlisting}
+
+\section{How to Run the Program}
+
+The entire Word Count pipeline is executed using a simple Unix command:
+
+\begin{verbatim}
+cat input.txt | python3 mapper.py | sort | python3 reducer.py
+\end{verbatim}
+
+This simulates a full MapReduce workflow with:
+\begin{itemize}
+    \item Python scripts as Mapper and Reducer.
+    \item Unix \texttt{sort} as the Shuffle/Sort step.
+\end{itemize}
+
+\section{Who Does What}
+
+\begin{itemize}
+  \item \textbf{Mapper}: Processes input chunks, tokenizes into words,
+        and outputs key-value pairs (word, 1) for each occurrence.
+
+  \item \textbf{Shuffle/Sort}: Groups all pairs by key (word)
+        and sorts the keys, preparing for reduction
+        (handled by \texttt{defaultdict} and \texttt{sorted}).
+
+  \item \textbf{Reducer}: Aggregates values for each key
+        by summing the list of 1s, producing the final count.
+
+  \item \textbf{Main Function}: Splits input into chunks,
+        orchestrates map/shuffle/reduce phases,
+        and collects results into a dictionary.
+\end{itemize}
+
+\section{Conclusion}
+
+This practical work demonstrates how distributed data processing can be
+simulated using a lightweight MapReduce model.  
+By implementing the Mapper, Shuffle, and Reducer manually in Python,
+we gain a clear understanding of how large-scale systems like Hadoop
+operate internally.
+
+\end{document}
+\documentclass[a4paper,12pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\title{Practical Work 4: Word Count using MapReduce}
+\author{USTH -- Distributed Systems \\ Do Minh Tien - 23BI14421}
+\date{\today}
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    frame=single,
+    breaklines=true
+}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+This practical work implements the classical Word Count program using a
+custom MapReduce model in Python.  
+The goal is to understand how Mapper, Shuffle, and Reducer components
+cooperate in distributed data processing, without relying on heavy
+frameworks such as Hadoop or Spark.
+
+The assignment requires using a MapReduce system of our choice,
+and since Python is allowed while C/C++ frameworks are unavailable,
+we developed our own lightweight MapReduce pipeline.
+
+\section{Why We Chose Our MapReduce Implementation}
+We implemented a minimal MapReduce system in Python because:
+
+\begin{itemize}
+    \item Python is simple, portable, and installed on all USTH lab machines.
+    \item It avoids the heavy installation and configuration of Hadoop.
+    \item It clearly demonstrates the internal logic of Map, Shuffle, and Reduce.
+    \item The pipeline can be executed using Unix tools (cat, sort).
+    \item It satisfies the requirement of “inventing” our own MapReduce version.
+\end{itemize}
+
+This makes the implementation educational, lightweight, and easy to test.
+
+\section{MapReduce Architecture for Word Count}
+
+The system follows the classical 3-phase MapReduce pipeline:
+
+\begin{enumerate}
+    \item \textbf{Map Phase}:  
+    Tokenizes input text and outputs \texttt{(word, 1)} pairs.
+
+    \item \textbf{Shuffle/Sort Phase}:  
+    Groups pairs by word and sorts them.
+
+    \item \textbf{Reduce Phase}:  
+    Sums all counts for each word and emits final totals.
+\end{enumerate}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.92\textwidth]{wordcount_architecture.png}
+    \caption{Word Count MapReduce Workflow}
+\end{figure}
+
+\section{Mapper Implementation}
+
+The Mapper reads input from standard input, splits into words,
+and emits a key-value pair for each occurrence:
+
+\begin{lstlisting}[language=Python]
+# mapper.py
+import sys
+
+for line in sys.stdin:
+    line = line.strip().lower()
+    for word in line.split():
+        print(f"{word}\t1")
+\end{lstlisting}
+
+\section{Reducer Implementation}
+
+The Reducer receives sorted pairs and aggregates word counts:
+
+\begin{lstlisting}[language=Python]
+# reducer.py
+import sys
+
+current_word = None
+current_count = 0
+
+for line in sys.stdin:
+    word, count = line.strip().split("\t")
+    count = int(count)
+
+    if word == current_word:
+        current_count += count
+    else:
+        if current_word is not None:
+            print(f"{current_word}\t{current_count}")
+        current_word = word
+        current_count = count
+
+if current_word is not None:
+    print(f"{current_word}\t{current_count}")
+\end{lstlisting}
+
+\section{How to Run the Program}
+
+The entire Word Count pipeline is executed using a simple Unix command:
+
+\begin{verbatim}
+cat input.txt | python3 mapper.py | sort | python3 reducer.py
+\end{verbatim}
+
+This simulates a full MapReduce workflow with:
+\begin{itemize}
+    \item Python scripts as Mapper and Reducer.
+    \item Unix \texttt{sort} as the Shuffle/Sort step.
+\end{itemize}
+
+\section{Who Does What}
+
+\begin{itemize}
+  \item \textbf{Mapper}: Processes input chunks, tokenizes into words,
+        and outputs key-value pairs (word, 1) for each occurrence.
+
+  \item \textbf{Shuffle/Sort}: Groups all pairs by key (word)
+        and sorts the keys, preparing for reduction
+        (handled by \texttt{defaultdict} and \texttt{sorted}).
+
+  \item \textbf{Reducer}: Aggregates values for each key
+        by summing the list of 1s, producing the final count.
+
+  \item \textbf{Main Function}: Splits input into chunks,
+        orchestrates map/shuffle/reduce phases,
+        and collects results into a dictionary.
+\end{itemize}
+
+\section{Conclusion}
+
+This practical work demonstrates how distributed data processing can be
+simulated using a lightweight MapReduce model.  
+By implementing the Mapper, Shuffle, and Reducer manually in Python,
+we gain a clear understanding of how large-scale systems like Hadoop
+operate internally.
+
+\end{document}

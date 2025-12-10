@@ -1,0 +1,4 @@
+/usr/bin/python
+/etc/hosts
+/var/log/syslog
+/home/user/shortpath.txt
